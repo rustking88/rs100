@@ -1,3 +1,81 @@
-fn main() {
-    println!("Hello, world!");
+use std::fs;
+
+use clap::Parser;
+use rcli::*;
+use zxcvbn::zxcvbn;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt::init();
+    let opts: Opts = Opts::parse();
+    match opts.cmd {
+        SubCommand::GenPass(opts) => {
+            let password = process_genpass(
+                opts.length,
+                opts.uppercase,
+                opts.lowercase,
+                opts.number,
+                opts.symbol,
+            )?;
+            println!("{}", password);
+            //output password strength in stderr
+            let strength = zxcvbn(&password, &[]);
+            eprintln!("Password strength: {}", strength.score());
+        }
+        SubCommand::Base64(subcmd) => match subcmd {
+            Base64SubCommand::Encode(opts) => match opts.format {
+                Base64Format::Standard => {
+                    let mut input = get_reader(&opts.input)?;
+                    let ret = process_encode(&mut input, opts.format)?;
+                    println!("{}", ret);
+                }
+                Base64Format::UrlSafe => {
+                    let mut input = get_reader(&opts.input)?;
+                    let ret = process_encode(&mut input, opts.format)?;
+                    println!("{}", ret);
+                }
+            },
+            Base64SubCommand::Decode(opts) => match opts.format {
+                Base64Format::Standard => {
+                    let mut input = get_reader(&opts.input)?;
+                    let ret = process_decode(&mut input, opts.format)?;
+                    println!("{}", ret);
+                }
+                Base64Format::UrlSafe => {
+                    let mut input = get_reader(&opts.input)?;
+                    let ret = process_decode(&mut input, opts.format)?;
+                    println!("{}", ret);
+                }
+            },
+        },
+        SubCommand::Text(subcmd) => match subcmd {
+            TextSubCommand::Sign(opts) => {
+                let sign = process_text_sign(&opts.input, &opts.key, opts.format)?;
+                println!("{}", sign);
+            }
+            TextSubCommand::Verify(opts) => {
+                let verified = process_text_verify(&opts.input, &opts.key, opts.format, &opts.sig)?;
+                println!("{}", verified);
+            }
+            TextSubCommand::Generate(opts) => {
+                let key = process_generate(opts.format)?;
+                match opts.format {
+                    TextSignFormat::Blake3 => {
+                        let name = opts.output.join("blake3.txt");
+                        fs::write(name, &key[0])?;
+                    }
+                    TextSignFormat::Ed25519 => {
+                        let name = opts.output;
+                        fs::write(name.join("ed25519.sk"), &key[0])?;
+                        fs::write(name.join("ed25519.pk"), &key[1])?;
+                    }
+                }
+                println!("{:?}", key);
+            }
+        },
+        SubCommand::Http(subcmd) => match subcmd {
+           HttpSubCommand::Serve(opts) => process_http_serve(opts.dir, opts.port).await?,
+        }
+    }
+    Ok(())
 }
