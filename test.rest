@@ -1,3 +1,17 @@
-### test index page
+### test static page with handler
 
-GET http://localhost:8080/fixtures/blake3.txt
+GET http://localhost:8080/cargo.toml
+
+
+### test statice page with tower-http
+
+GET http://localhost:8080/fixtures/ed25519.pk
+
+
+### test static page with tower-http
+    
+GET http://localhost:8080/tower/fixtures/ed25519.pk
+
+### test static page with tower-http
+    
+GET http://localhost:8080/tower/fixtures/

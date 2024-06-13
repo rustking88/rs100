@@ -14,6 +14,7 @@ clap = { version = "4.5.4", features = ["derive"] }
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 rand = "0.8.5"
 tokio = { version = "1.38.0", features = ["full"] }
+tower-http = { version = "0.5.2", features = ["full"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 zxcvbn = "3.0.1"
